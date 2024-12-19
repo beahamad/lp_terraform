@@ -1,3 +1,5 @@
+# Author: Ana Hamad
+
 variable "vm_name" {
     type        = string
     description = "VM name. Required."
@@ -8,7 +10,7 @@ variable "vm_name" {
     }
 
     validation {
-        condition     = can(regex("^[a-zA-Z][^$+&#<>'\"/;`%]*[^_-]$"))
+        condition     = can(regex("^[a-zA-Z][^$+&#<>'\"/;`%]*[^_-]$", var.vm_name))
         error_message = <<EOT
 Invalid VM name.
     Can not start with numbers, - or _
@@ -38,36 +40,54 @@ variable "vm_image" {
 variable "vm_size" {
     type        = string
     default     = "micro" 
-    description = <<EOF
-VM size by amount of resources allocated.
+    description = "VM size by amount of resources allocated."
+
+    validation {
+      condition = contains(["micro", "small", "medium", "large"], var.vm_size)
+      error_message = <<EOT
+Invalid size.
 Allowed values: 
     - micro (1Gb mem, 1 vCPU)
-    - small (4Gb mem, 2 vCPU)
+    - small (2Gb mem, 2 vCPU)
     - medium (4Gb mem, 4 vCPU)
     - large (6Gb mem, 4 vCPU)
 Default: micro
-EOF
+EOT
+    }
 }
 
-variable "vm_memory" {
-    type = string
-    default = "1024mib"
-    description = "VM memory allocated. Default: 1024mib (micro)"
+variable "setup" {
+  default = {
+    "micro"   = {
+      vm_mem  = "1024mib",
+      vm_cpus = 1,
+      max     = 12
+    }
+    "small"   = {
+      vm_mem  = "2048mib",
+      vm_cpus = 2,
+      max     = 6
+    }
+    "medium"  = {
+      vm_mem  = "4096mib",
+      vm_cpus = 4,
+      max     = 3
+    }
+    "large"   = {
+      vm_mem  = "6144mib",
+      vm_cpus = 4,
+      max     = 2
+    }
+  }
 }
 
-variable "vm_cpus" {
-    type        = number
-    default     = 1
-    description = "Number of vCPUs. Default: 1"
-}
-
-variable "network_type" {
+variable "net_type" {
     type        = string
     default     = "hostonly"
     description = "Type of the network adapter to be configured. Default: hostonly."
 
     validation {
-      condition = contains(["nat", "bridged", "hostonly", "internal", "generic"], var.network_type)
+      condition = contains(["nat", "bridged", "hostonly", "internal", "generic"], var.net_type)
       error_message = <<EOT
 Invalid network adapter.
 Allowed values:
